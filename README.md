@@ -62,6 +62,27 @@ A unified AI chatbot that integrates multiple AI providers (Gemini, ChatGPT, Cla
    REPLICATE_API_TOKEN=your_replicate_token_here  # Optional
    ```
 
+### Alternative: Docker Installation
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/NimuthuGanegoda/AI-Setups.git
+   cd AI-Setups
+   ```
+
+2. **Set up environment variables**:
+   ```bash
+   cp .env.example .env
+   # Edit .env with your API keys
+   ```
+
+3. **Run with Docker Compose**:
+   ```bash
+   docker-compose up
+   ```
+
+The web interface will be available at `http://localhost:5000`
+
 ## 🎯 Usage
 
 ### Command Line Interface
