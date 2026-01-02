@@ -356,17 +356,17 @@
 
         // Generate image
         async function generateImage() {
-            const prompt = prompt('Enter image description:');
-            if (!prompt) return;
+            const userPrompt = prompt('Enter image description:');
+            if (!userPrompt) return;
             
-            addMessage('user', '🎨 Generate image: ' + prompt);
+            addMessage('user', '🎨 Generate image: ' + userPrompt);
             showLoading(true);
             
             try {
                 const response = await fetch('/api/generate-image', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt })
+                    body: JSON.stringify({ prompt: userPrompt })
                 });
                 
                 const data = await response.json();
@@ -386,17 +386,17 @@
 
         // Generate video
         async function generateVideo() {
-            const prompt = prompt('Enter video description:');
-            if (!prompt) return;
+            const userPrompt = prompt('Enter video description:');
+            if (!userPrompt) return;
             
-            addMessage('user', '🎥 Generate video: ' + prompt);
+            addMessage('user', '🎥 Generate video: ' + userPrompt);
             showLoading(true);
             
             try {
                 const response = await fetch('/api/generate-video', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt })
+                    body: JSON.stringify({ prompt: userPrompt })
                 });
                 
                 const data = await response.json();

@@ -10,7 +10,17 @@ from chatbot import UnifiedAIChatbot
 from config import Config
 
 app = Flask(__name__)
+
+# Initialize chatbot globally (will be set in main)
 chatbot = None
+
+
+def get_chatbot():
+    """Get the chatbot instance, ensuring it's initialized"""
+    global chatbot
+    if chatbot is None:
+        raise RuntimeError("Chatbot not initialized. Call main() first.")
+    return chatbot
 
 
 @app.route('/')
@@ -22,15 +32,16 @@ def index():
 @app.route('/api/status', methods=['GET'])
 def get_status():
     """Get chatbot status"""
-    return jsonify(chatbot.get_status())
+    return jsonify(get_chatbot().get_status())
 
 
 @app.route('/api/providers', methods=['GET'])
 def get_providers():
     """Get available providers"""
+    bot = get_chatbot()
     return jsonify({
-        'providers': chatbot.list_providers(),
-        'current': chatbot.current_provider
+        'providers': bot.list_providers(),
+        'current': bot.current_provider
     })
 
 
@@ -40,7 +51,8 @@ def switch_provider():
     data = request.json
     provider = data.get('provider')
     
-    if chatbot.set_provider(provider):
+    bot = get_chatbot()
+    if bot.set_provider(provider):
         return jsonify({'success': True, 'provider': provider})
     else:
         return jsonify({'success': False, 'error': 'Provider not available'}), 400
@@ -57,10 +69,11 @@ def chat():
         return jsonify({'error': 'No message provided'}), 400
     
     try:
-        response = chatbot.chat(message, provider=provider)
+        bot = get_chatbot()
+        response = bot.chat(message, provider=provider)
         return jsonify({
             'response': response,
-            'provider': provider or chatbot.current_provider
+            'provider': provider or bot.current_provider
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -76,7 +89,8 @@ def generate_image():
         return jsonify({'error': 'No prompt provided'}), 400
     
     try:
-        filepath = chatbot.generate_image(prompt)
+        bot = get_chatbot()
+        filepath = bot.generate_image(prompt)
         filename = Path(filepath).name
         return jsonify({
             'success': True,
@@ -97,7 +111,8 @@ def generate_video():
         return jsonify({'error': 'No prompt provided'}), 400
     
     try:
-        filepath = chatbot.generate_video(prompt)
+        bot = get_chatbot()
+        filepath = bot.generate_video(prompt)
         filename = Path(filepath).name
         return jsonify({
             'success': True,
@@ -111,7 +126,7 @@ def generate_video():
 @app.route('/api/reset', methods=['POST'])
 def reset_conversation():
     """Reset conversation history"""
-    chatbot.reset_conversation()
+    get_chatbot().reset_conversation()
     return jsonify({'success': True})
 
 
@@ -148,16 +163,25 @@ def main():
     templates_dir = Path(__file__).parent / 'templates'
     templates_dir.mkdir(exist_ok=True)
     
+    # Get configuration from environment
+    debug_mode = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
+    host = os.getenv('FLASK_HOST', '0.0.0.0')
+    port = int(os.getenv('FLASK_PORT', '5000'))
+    
     print("=" * 60)
     print("🤖 Multi-AI Chatbot Web Interface")
     print("=" * 60)
     print(f"Available providers: {', '.join(chatbot.list_providers())}")
     print(f"Current provider: {chatbot.current_provider}")
-    print("\nStarting server at http://127.0.0.1:5000")
+    print(f"\nStarting server at http://127.0.0.1:{port}")
+    if host == '0.0.0.0':
+        print("⚠️  Server is accessible from external networks")
+    if debug_mode:
+        print("⚠️  Debug mode is enabled (not for production)")
     print("Press Ctrl+C to stop")
     print("=" * 60)
     
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=debug_mode, host=host, port=port)
 
 
 if __name__ == '__main__':

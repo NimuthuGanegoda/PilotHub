@@ -44,6 +44,10 @@ class Config:
         if not cls.GEMINI_API_KEY and cls.DEFAULT_AI_PROVIDER == 'gemini':
             errors.append("GEMINI_API_KEY is required for Gemini provider")
         
+        # Check if at least one provider is available
+        if not cls.OPENAI_API_KEY and not cls.GEMINI_API_KEY and not cls.ANTHROPIC_API_KEY:
+            errors.append("At least one AI provider API key must be set (OPENAI_API_KEY, GEMINI_API_KEY, or ANTHROPIC_API_KEY)")
+        
         if errors:
             return False, errors
         

@@ -3,6 +3,7 @@ Video Generation Provider using Replicate
 """
 import os
 import time
+import requests
 from pathlib import Path
 from datetime import datetime
 try:
@@ -41,8 +42,6 @@ class ReplicateVideoGenerator(VideoGenerator):
             )
             
             # Download the video
-            import requests
-            
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"video_{timestamp}.mp4"
             filepath = self.output_dir / filename

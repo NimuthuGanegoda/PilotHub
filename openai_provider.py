@@ -2,6 +2,7 @@
 OpenAI Provider (ChatGPT and DALL-E)
 """
 import os
+import requests
 from pathlib import Path
 from datetime import datetime
 from openai import OpenAI
@@ -67,7 +68,6 @@ class DALLEGenerator(ImageGenerator):
             image_url = response.data[0].url
             
             # Download and save the image
-            import requests
             image_response = requests.get(image_url)
             
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
