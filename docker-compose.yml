@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  chatbot:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - STABILITY_API_KEY=${STABILITY_API_KEY}
+      - REPLICATE_API_TOKEN=${REPLICATE_API_TOKEN}
+      - DEFAULT_AI_PROVIDER=${DEFAULT_AI_PROVIDER:-gemini}
+      - DEFAULT_IMAGE_GENERATOR=${DEFAULT_IMAGE_GENERATOR:-dalle}
+    volumes:
+      - ./generated_images:/app/generated_images
+      - ./generated_videos:/app/generated_videos
+    restart: unless-stopped

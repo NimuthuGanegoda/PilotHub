@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-AI Chatbot</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 90vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .provider-select {
+            padding: 8px 15px;
+            border-radius: 20px;
+            border: 2px solid white;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .provider-select option {
+            color: #333;
+        }
+
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 30px;
+            background: #f7f7f7;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-bubble {
+            max-width: 70%;
+            padding: 12px 18px;
+            border-radius: 18px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        .message.user .message-bubble {
+            background: #667eea;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.assistant .message-bubble {
+            background: white;
+            color: #333;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .message-label {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .input-area {
+            padding: 20px 30px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .input-field {
+            flex: 1;
+            padding: 12px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .input-field:focus {
+            border-color: #667eea;
+        }
+
+        .send-button, .action-button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        .send-button:hover, .action-button:hover {
+            transform: scale(1.05);
+        }
+
+        .send-button:active, .action-button:active {
+            transform: scale(0.95);
+        }
+
+        .actions-bar {
+            padding: 15px 30px;
+            background: #f7f7f7;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .action-button {
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #666;
+            padding: 10px;
+            font-style: italic;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .media-preview {
+            margin-top: 10px;
+            max-width: 100%;
+        }
+
+        .media-preview img {
+            max-width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .media-preview video {
+            max-width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>
+                🤖 Multi-AI Chatbot
+                <span class="status-badge" id="currentProvider">Gemini</span>
+            </h1>
+            <select class="provider-select" id="providerSelect">
+                <!-- Populated dynamically -->
+            </select>
+        </div>
+
+        <div class="actions-bar">
+            <button class="action-button" onclick="generateImage()">🎨 Generate Image</button>
+            <button class="action-button" onclick="generateVideo()">🎥 Generate Video</button>
+            <button class="action-button" onclick="resetConversation()">🔄 Reset Chat</button>
+        </div>
+
+        <div class="chat-container" id="chatContainer">
+            <div class="message assistant">
+                <div>
+                    <div class="message-label">AI Assistant</div>
+                    <div class="message-bubble">
+                        👋 Hello! I'm your multi-AI assistant. I can chat with you using different AI providers (Gemini, ChatGPT), generate images, and create videos. How can I help you today?
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">AI is thinking...</div>
+
+        <div class="input-area">
+            <div class="input-container">
+                <input 
+                    type="text" 
+                    class="input-field" 
+                    id="messageInput" 
+                    placeholder="Type your message here..."
+                    onkeypress="handleKeyPress(event)"
+                >
+                <button class="send-button" onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentProvider = 'gemini';
+
+        // Initialize
+        async function init() {
+            await loadProviders();
+            await updateStatus();
+        }
+
+        // Load available providers
+        async function loadProviders() {
+            try {
+                const response = await fetch('/api/providers');
+                const data = await response.json();
+                
+                const select = document.getElementById('providerSelect');
+                select.innerHTML = '';
+                
+                data.providers.forEach(provider => {
+                    const option = document.createElement('option');
+                    option.value = provider;
+                    option.textContent = provider.toUpperCase();
+                    if (provider === data.current) {
+                        option.selected = true;
+                    }
+                    select.appendChild(option);
+                });
+
+                currentProvider = data.current;
+                
+                select.addEventListener('change', async (e) => {
+                    await switchProvider(e.target.value);
+                });
+            } catch (error) {
+                console.error('Error loading providers:', error);
+            }
+        }
+
+        // Update status
+        async function updateStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                document.getElementById('currentProvider').textContent = data.current_provider.toUpperCase();
+            } catch (error) {
+                console.error('Error updating status:', error);
+            }
+        }
+
+        // Switch provider
+        async function switchProvider(provider) {
+            try {
+                const response = await fetch('/api/switch-provider', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ provider })
+                });
+                
+                if (response.ok) {
+                    currentProvider = provider;
+                    await updateStatus();
+                    addMessage('system', `Switched to ${provider.toUpperCase()} provider`);
+                }
+            } catch (error) {
+                console.error('Error switching provider:', error);
+            }
+        }
+
+        // Send message
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // Add user message
+            addMessage('user', message);
+            input.value = '';
+            
+            // Show loading
+            showLoading(true);
+            
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message, provider: currentProvider })
+                });
+                
+                const data = await response.json();
+                
+                if (data.response) {
+                    addMessage('assistant', data.response, data.provider);
+                } else if (data.error) {
+                    addMessage('system', 'Error: ' + data.error);
+                }
+            } catch (error) {
+                addMessage('system', 'Error: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Generate image
+        async function generateImage() {
+            const userPrompt = prompt('Enter image description:');
+            if (!userPrompt) return;
+            
+            addMessage('user', '🎨 Generate image: ' + userPrompt);
+            showLoading(true);
+            
+            try {
+                const response = await fetch('/api/generate-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: userPrompt })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    addMessage('assistant', `Image generated successfully!`, null, 
+                        `<div class="media-preview"><img src="${data.url}" alt="Generated image"></div>`);
+                } else {
+                    addMessage('system', 'Error: ' + data.error);
+                }
+            } catch (error) {
+                addMessage('system', 'Error: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Generate video
+        async function generateVideo() {
+            const userPrompt = prompt('Enter video description:');
+            if (!userPrompt) return;
+            
+            addMessage('user', '🎥 Generate video: ' + userPrompt);
+            showLoading(true);
+            
+            try {
+                const response = await fetch('/api/generate-video', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: userPrompt })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    if (data.url.endsWith('.mp4')) {
+                        addMessage('assistant', `Video generated successfully!`, null,
+                            `<div class="media-preview"><video controls src="${data.url}"></video></div>`);
+                    } else {
+                        addMessage('assistant', `Video placeholder created at: ${data.filepath}`);
+                    }
+                } else {
+                    addMessage('system', 'Error: ' + data.error);
+                }
+            } catch (error) {
+                addMessage('system', 'Error: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Reset conversation
+        async function resetConversation() {
+            if (!confirm('Are you sure you want to reset the conversation?')) return;
+            
+            try {
+                await fetch('/api/reset', { method: 'POST' });
+                
+                const chatContainer = document.getElementById('chatContainer');
+                chatContainer.innerHTML = `
+                    <div class="message assistant">
+                        <div>
+                            <div class="message-label">AI Assistant</div>
+                            <div class="message-bubble">
+                                Conversation reset. How can I help you?
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error resetting conversation:', error);
+            }
+        }
+
+        // Add message to chat
+        function addMessage(role, content, provider = null, extraHtml = '') {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+            
+            let label = role === 'user' ? 'You' : 
+                       role === 'assistant' ? (provider ? provider.toUpperCase() : 'AI Assistant') :
+                       'System';
+            
+            messageDiv.innerHTML = `
+                <div>
+                    <div class="message-label">${label}</div>
+                    <div class="message-bubble">${content}</div>
+                    ${extraHtml}
+                </div>
+            `;
+            
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Show/hide loading
+        function showLoading(show) {
+            const loading = document.getElementById('loading');
+            loading.className = show ? 'loading active' : 'loading';
+        }
+
+        // Handle enter key
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        // Initialize on load
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
