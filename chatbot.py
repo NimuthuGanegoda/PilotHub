@@ -9,6 +9,9 @@ from pathlib import Path
 from config import Config
 from openai_provider import OpenAIProvider, DALLEGenerator
 from gemini_provider import GeminiProvider
+from deepseek_provider import DeepSeekProvider
+from grok_provider import GrokProvider
+from duckduckgo_provider import DuckDuckGoProvider
 from video_provider import ReplicateVideoGenerator, SimpleVideoGenerator
 
 
@@ -30,6 +33,15 @@ class UnifiedAIChatbot:
         
         if Config.GEMINI_API_KEY:
             self.providers['gemini'] = GeminiProvider(Config.GEMINI_API_KEY)
+
+        if Config.DEEPSEEK_API_KEY:
+            self.providers['deepseek'] = DeepSeekProvider(Config.DEEPSEEK_API_KEY)
+
+        if Config.XAI_API_KEY:
+            self.providers['grok'] = GrokProvider(Config.XAI_API_KEY)
+
+        # DuckDuckGo is free, always add it
+        self.providers['duckduckgo'] = DuckDuckGoProvider()
         
         # Initialize image generators
         if Config.OPENAI_API_KEY:
@@ -58,6 +70,8 @@ class UnifiedAIChatbot:
             )
         
         self.current_provider = Config.DEFAULT_AI_PROVIDER
+        if self.current_provider not in self.providers and self.providers:
+            self.current_provider = list(self.providers.keys())[0]
     
     def set_provider(self, provider_name: str) -> bool:
         """Switch to a different AI provider"""
@@ -178,6 +192,30 @@ class UnifiedAIChatbot:
         """Get the current conversation history"""
         return self.conversation_history
     
+    def arena_chat(self, message: str, providers: List[str] = None) -> Dict[str, str]:
+        """
+        Send a message to multiple providers and get their responses
+
+        Args:
+            message: The user's message
+            providers: List of provider names to query. If None, uses all available.
+
+        Returns:
+            Dictionary mapping provider names to their responses
+        """
+        if not providers:
+            providers = self.list_providers()
+
+        results = {}
+        for provider in providers:
+            if provider in self.providers:
+                # Use generate_text for arena mode to avoid affecting conversation history state
+                results[provider] = self.providers[provider].generate_text(message)
+            else:
+                results[provider] = f"Error: Provider {provider} not available"
+
+        return results
+
     def get_status(self) -> Dict:
         """Get the status of all providers and generators"""
         return {

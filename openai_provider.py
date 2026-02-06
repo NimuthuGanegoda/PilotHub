@@ -12,10 +12,10 @@ from base_provider import AIProvider, ImageGenerator
 class OpenAIProvider(AIProvider):
     """OpenAI ChatGPT provider"""
     
-    def __init__(self, api_key: str):
+    def __init__(self, api_key: str, base_url: str = None, model: str = "gpt-4"):
         super().__init__(api_key)
-        self.client = OpenAI(api_key=api_key)
-        self.model = "gpt-4"
+        self.client = OpenAI(api_key=api_key, base_url=base_url)
+        self.model = model
     
     def generate_text(self, prompt: str, **kwargs) -> str:
         """Generate text using ChatGPT"""
