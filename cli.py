@@ -37,6 +37,7 @@ Welcome to the Unified AI Chatbot! This chatbot integrates multiple AI providers
 - `/switch <provider>` - Switch to a different AI provider
 - `/image <prompt>` - Generate an image
 - `/video <prompt>` - Generate a video
+- `/arena <message>` - Compare responses from multiple providers
 - `/reset` - Clear conversation history
 - `/status` - Show current status
 - `/exit` or `/quit` - Exit the chatbot
@@ -96,7 +97,11 @@ def main():
         display_welcome()
         display_status(chatbot)
         console.print()
-    
+    else:
+        # In non-interactive mode, just exit after initialization verification
+        console.print("[green]Chatbot initialized successfully in non-interactive mode.[/green]")
+        return
+
     # Main interaction loop
     while True:
         try:
@@ -155,6 +160,37 @@ def main():
                         console.print(f"[green]Video saved to:[/green] {result}")
                     else:
                         console.print("[red]Usage: /video <description>[/red]")
+
+                elif command == '/arena':
+                    if command_arg:
+                        console.print(f"[yellow]Entering Arena with message: {command_arg}[/yellow]")
+
+                        available_providers = chatbot.list_providers()
+                        if not available_providers:
+                             console.print("[red]No providers available[/red]")
+                             continue
+
+                        console.print(f"[yellow]Contestants: {', '.join(available_providers)}[/yellow]")
+
+                        # Limit to 3 providers for display sanity if too many
+                        if len(available_providers) > 3:
+                            console.print("[yellow]Warning: Limiting display to first 3 providers[/yellow]")
+                            available_providers = available_providers[:3]
+
+                        results = chatbot.arena_chat(command_arg, available_providers)
+
+                        # Display results in a table
+                        table = Table(title=f"Arena Result", show_header=True, header_style="bold magenta", show_lines=True)
+                        for provider in available_providers:
+                            table.add_column(provider.upper(), style="cyan", overflow="fold")
+
+                        # Add a single row with all responses
+                        responses = [results.get(p, "No response") for p in available_providers]
+                        table.add_row(*responses)
+
+                        console.print(table)
+                    else:
+                        console.print("[red]Usage: /arena <message>[/red]")
                 
                 else:
                     console.print(f"[red]Unknown command: {command}[/red]")
